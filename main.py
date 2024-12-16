@@ -42,13 +42,14 @@ def load_model(model_id, lora_id, btn_check, progress=gr.Progress(track_tqdm=Tru
         progress(0.2, desc="Starting model loading")
         time.sleep(1)
         pipe = StableDiffusionXLPipeline.from_pretrained(model_id, torch_dtype=torch.float16, token=hf_token if hf_token else None)
+        scheduler_args = {"prediction_type": "v_prediction", "rescale_betas_zero_snr": True}
+        pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, **scheduler_args)
     else:
         gr.Info("wait a minute the model is loading!")
         progress(0.2, desc="Starting model loading")
         pipe = StableDiffusionPipeline.from_pretrained(model_id, safety_checker=None, torch_dtype=torch.float16, token=hf_token if hf_token else None)
-
-    scheduler_args = {"prediction_type": "v_prediction", "rescale_betas_zero_snr": True}
-    pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, **scheduler_args)
+        pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+    
     pipe.enable_xformers_memory_efficient_attention()
 
     if lora_id:
